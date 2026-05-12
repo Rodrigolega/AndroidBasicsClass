@@ -2,6 +2,7 @@ package com.rodrigolega.androidbasicsclass.ui.ui.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.School
@@ -22,18 +23,17 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.rodrigolega.androidbasicsclass.ui.ui.firstpartialpdm1.homeFirstPartialPDM1.view.HomeFirstPartialPDM1View
+import com.rodrigolega.androidbasicsclass.ui.ui.login.view.LoginView
 import com.rodrigolega.androidbasicsclass.ui.ui.personalinformation.homePersonalInformation.view.HomePersonalInformationView
 import com.rodrigolega.androidbasicsclass.ui.ui.secondpartialpdm1.homeSecondPartialPDM1.view.HomeSecondPartialPDM1View
 import com.rodrigolega.androidbasicsclass.ui.ui.thirdpartialids2.homeThirdPartialIDS2.view.HomeThirdPartialIDS2View
 import com.rodrigolega.androidbasicsclass.ui.ui.thirdpartialpdm1.homeThirdPartialPDM1.view.HomeThirdPartialPDM1View
 
 /**
- * Sealed class defining all bottom-tab routes with their metadata.
- * @property route Unique route string used by the NavHost.
- * @property label Short label shown beneath the tab icon.
- * @property icon Icon displayed in the NavigationBar item.
+ * Sealed class defining routes with their metadata.
  */
 sealed class AppRoute(val route: String, val label: String, val icon: ImageVector) {
+    object Login : AppRoute("login", "Login", Icons.Filled.Lock)
     object ThirdPartialIDS2 : AppRoute("third_partial_ids2", "IDS2 P3", Icons.Filled.School)
     object FirstPartialPDM1 : AppRoute("first_partial_pdm1", "PDM1 P1", Icons.Filled.PhoneAndroid)
     object SecondPartialPDM1 : AppRoute("second_partial_pdm1", "PDM1 P2", Icons.Outlined.PhoneAndroid)
@@ -41,7 +41,7 @@ sealed class AppRoute(val route: String, val label: String, val icon: ImageVecto
     object PersonalInformation : AppRoute("personal_information", "About Me", Icons.Filled.Person)
 }
 
-/** Ordered list of all tabs shown in the bottom bar. */
+/** Ordered list of tabs shown in the bottom bar (excluding Login). */
 private val TABS = listOf(
     AppRoute.ThirdPartialIDS2,
     AppRoute.FirstPartialPDM1,
@@ -50,10 +50,6 @@ private val TABS = listOf(
     AppRoute.PersonalInformation
 )
 
-/**
- * Root composable that hosts the Scaffold with a bottom NavigationBar and
- * a NavHost wired to the five main screens of the app.
- */
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
@@ -62,31 +58,35 @@ fun AppNavigation() {
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                TABS.forEach { tab ->
-                    NavigationBarItem(
-                        selected = currentRoute == tab.route,
-                        onClick = {
-                            navController.navigate(tab.route) {
-                                popUpTo(navController.graph.startDestinationId) {
-                                    saveState = true
+            // Only show navigation bar if we are NOT on the login screen
+            if (currentRoute != AppRoute.Login.route) {
+                NavigationBar {
+                    TABS.forEach { tab ->
+                        NavigationBarItem(
+                            selected = currentRoute == tab.route,
+                            onClick = {
+                                navController.navigate(tab.route) {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(tab.icon, contentDescription = tab.label) },
-                        label = { Text(tab.label, fontSize = 10.sp) }
-                    )
+                            },
+                            icon = { Icon(tab.icon, contentDescription = tab.label) },
+                            label = { Text(tab.label, fontSize = 10.sp) }
+                        )
+                    }
                 }
             }
         }
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = AppRoute.ThirdPartialIDS2.route,
+            startDestination = AppRoute.Login.route, // Set Login as start destination
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable(AppRoute.Login.route) { LoginView() }
             composable(AppRoute.ThirdPartialIDS2.route) { HomeThirdPartialIDS2View() }
             composable(AppRoute.FirstPartialPDM1.route) { HomeFirstPartialPDM1View() }
             composable(AppRoute.SecondPartialPDM1.route) { HomeSecondPartialPDM1View() }
